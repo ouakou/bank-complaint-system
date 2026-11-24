@@ -1,5 +1,5 @@
 from domain.errors import DomainError       # add to the imports 
-
+from fastapi import Request
 
 
 class ApiError(Exception): 
@@ -12,13 +12,14 @@ class ApiError(Exception):
   
 
 # inside install_error_handlers(app), above the 503 handler: 
+def install_error_handlers(app):
 
-@app.exception_handler(DomainError) 
-async def domain_error(request: Request, exc: DomainError): 
-    return error_response(request, exc.http_status, exc.code, exc.message, exc.retryable, 
-                       details=exc.details) 
+    @app.exception_handler(DomainError) 
+    async def domain_error(request: Request, exc: DomainError): 
+        return error_response(request, exc.http_status, exc.code, exc.message, exc.retryable, 
+                        details=exc.details) 
 
   
-@app.exception_handler(ApiError) 
-async def api_error(request: Request, exc: ApiError): 
-    return error_response(request, exc.http_status, exc.code, exc.message) 
+    @app.exception_handler(ApiError) 
+    async def api_error(request: Request, exc: ApiError): 
+        return error_response(request, exc.http_status, exc.code, exc.message) 

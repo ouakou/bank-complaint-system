@@ -2,18 +2,17 @@ from enum import Enum
 from decimal import Decimal
 class ComplaintStatus(str, Enum): 
 
-    OPEN = "Open" 
-    IN_REVIEW = "In Review" 
-    PENDING_APPROVAL = "Pending Approval" 
-    ESCALATED = "Escalated" 
-    CLOSED = "Closed" 
-
+    OPEN = "OPEN"
+    IN_PROGRESS = "IN_PROGRESS"
+    UNDER_REVIEW = "UNDER_REVIEW"
+    PENDING_APPROVAL = "PENDING_APPROVAL" 
+    CLOSED = "CLOSED"
 
 class Priority(str, Enum):
     LOW = "Low"
     MEDIUM = "Medium"
     HIGH = "High"
-
+    CRITICAL = "Critical"
 
 class Channel(str, Enum):
     PHONE = "Phone"
@@ -22,13 +21,13 @@ class Channel(str, Enum):
     BRANCH = "Branch"
 
 class Category(str, Enum):
-    FEE = "Fee"
-    CARD = "Card" 
-    TRANSACTION_DISPUTE = "Transaction Dispute"
-    DIGITAL_BANKING = "Digital Banking"
-    SERVICE_QUALITY = "Service Quality"
-    MORTGAGE_SERVICES = "Mortgage Servicing"
-    ACCOUNT_ACCESS = "Account Access"
+    FEE_DISPUTE = "Fee Dispute"
+    SERVICE_DELAY = "Service Delay"
+    TRANSACTION_ERROR = "Transaction Error"
+    ONLINE_BANKING = "Online Banking"
+    CARD_ISSUE = "Card Issue"
+    CUSTOMER_SERVICE = "Customer Service"
+    FRAUD_CLAIM = "Fraud Claim"
 
 
 class Role(str, Enum):
@@ -38,14 +37,14 @@ class Role(str, Enum):
 
 
 ALLOWED_TRANSITIONS = {
-    (ComplaintStatus('Open'), ComplaintStatus('In Review')): (Role('Analyst'), Role('Supervisor')),
-    (ComplaintStatus('In Review'), ComplaintStatus('Escalated')): (Role('Analyst'), Role('Supervisor')),
-    (ComplaintStatus('Escalated'), ComplaintStatus('In Review')): (Role('Supervisor'),),                                                              
+    (ComplaintStatus.OPEN, ComplaintStatus.IN_PROGRESS): (Role.ANALYST, Role.SUPERVISOR),
+    (ComplaintStatus.IN_PROGRESS, ComplaintStatus.UNDER_REVIEW): (Role.ANALYST, Role.SUPERVISOR),
+    (ComplaintStatus.UNDER_REVIEW, ComplaintStatus.IN_PROGRESS): (Role.SUPERVISOR,),                                                              
 }
 
 CLOSABLE = {
-    (ComplaintStatus('In Review')): Role('Supervisor'),
-    (ComplaintStatus('Escalated')): Role('Supervisor'),
+    ComplaintStatus.IN_PROGRESS: Role.SUPERVISOR, 
+    ComplaintStatus.UNDER_REVIEW: Role.SUPERVISOR
 }
 
 

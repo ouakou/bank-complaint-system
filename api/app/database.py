@@ -1,5 +1,4 @@
 import sqlite3
-from contextlib import contextmanager
 from sqlmodel import create_engine, Session
 path = "/Users/ouafikouera/Documents/:Volumes:DBeaver Community:Volumes:DBeaver Community:DBeaver.app"
 engine = create_engine(f"sqlite:///{path}")
@@ -15,18 +14,5 @@ def import_data_sqlite():
 
 
 def get_session():
-    return Session(engine)
-
-
-class DatabaseManager:
-    """One transaction per `with db.transaction()`: commit on success, roll back on error."""
-
-    @contextmanager
-    def transaction(self):
-        with Session(engine) as session:
-            try:
-                yield session
-                session.commit()
-            except Exception:
-                session.rollback()
-                raise
+    with Session(engine) as session:
+        yield session

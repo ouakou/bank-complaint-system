@@ -48,7 +48,7 @@ def audit_event_id_for(history_id):
     """Week 3 has no audit table: every write adds one history row, that row is the 
     write's audit record, and audit_event_id names it (H00281 -> AUD-000281). 
     Sprint 3's audit log replaces this.""" 
-    return f"AUD-{int(history_id[1:]):06d}" 
+    return f"AUD-{int(history_id):06d}" 
 
   
 
@@ -68,23 +68,38 @@ class ComplaintService:
         
         customer = self.customers.get_by_id(customer_id) 
         if customer is None: 
-            raise NotFound(f"Customer {customer_id} not found.") 
+            #raise NotFound(f"Customer {customer_id} not found.")
+            return None 
         return customer 
 
     def get_accounts(self, customer_id):
         
         customer = self.customers.get_by_id(customer_id) 
         if customer is None: 
-            raise NotFound("customer", customer_id)             
+            #raise NotFound("customer", customer_id)
+            return None           
         account = self.accounts.get_for_customer(customer_id) 
         return {"customer_id": customer_id, "accounts": account}
 
     def get_complaint(self, complaint_id):
     
         complaint = self.complaints.get_by_id(complaint_id) 
+        
+        if complaint is None:
+            #raise NotFound("complaint", complaint_id)
+            return None
+        
         history = self.history.get_for_complaint(complaint_id) 
         linked_sr = self.requests.get_for_complaint(complaint_id) 
-        return complaint, history, linked_sr
+
+        return {
+            "complaint": complaint,
+            "status_history": history,
+            "service_requests": [
+                {"request_id": r[0], "request_type": r[1], "status": r[2], "created_at": r[3]}
+                for r in linked_sr
+            ],
+        }
 
     def change_status(self, complaint_id, target_status, reason, role, actor_id = None):  
         
@@ -102,7 +117,12 @@ class ComplaintService:
             raise ForbiddenRole(role, f"Can't move a complaint to {target.value}")
 
         status = self.complaints.update_status(complaint_id, target) 
-        history = self.history.add(complaint_id, current, target, "datetime", actor_id, reason) 
+        history = self.history.add(complaint_id, 
+                                   current, 
+                                   target,
+                                   datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S"), 
+                                   actor_id, 
+                                   reason) 
             
         return status, history, audit_event_id_for(history.history_id) 
 
@@ -125,10 +145,10 @@ class ComplaintService:
             
         today = self.today()  
             
-        self.complaints.update_status(complaint_id, "Closed", today)
+        self.complaints.update_status(complaint_id, ComplaintStatus.CLOSED.value)
         history = self.history.add(
-            complaint_id, previous.value, "Closed",
-                datetime.now(timezone.utc), 
+            complaint_id, previous.value, ComplaintStatus.CLOSED.value,
+                datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S"), 
             actor_id, "Complaint closed",
         )
         return {
@@ -145,7 +165,8 @@ class ComplaintService:
                priority, account_id=None,
                assigned_analyst_id=None):
 
-        today = self.today()
+        received_at = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
+
 
         channel = Channel(channel).value
         category = Category(category).value
@@ -160,9 +181,10 @@ class ComplaintService:
             complaint_text=complaint_text,
             priority=priority,
             status=ComplaintStatus.OPEN.value,
-            received_at=today,
+            received_at=received_at,
             assigned_analyst_id=assigned_analyst_id,
         )
+        return complaint
 
 
     # TODO get_accounts, get_complaint (+ _complaint_with_children), change_status, 

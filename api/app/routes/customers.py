@@ -19,7 +19,7 @@ router = APIRouter(prefix="/customers", tags=["Read tools"])
 def get_customer(customer_id : str, session: Session = Depends(get_session)):
     customer = ComplaintService(session).get_customer(customer_id)
     if customer is None:
-        raise HTTPException(status_code=404, detail=f"Customer {customer_id} not found")
+        raise HTTPException(status_code=404, detail=f"Customer {customer_id} not found, use CUSXXX format")
     return customer
 
 @router.get("/{customer_id}/accounts", operation_id="get_accounts")

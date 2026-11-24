@@ -16,7 +16,11 @@ session: Session = Depends(get_session)
 @router.get("/{complaint_id}", operation_id="get_complaint")
 def get_complaint(complaint_id: str, 
                   session: Session = Depends(get_session)):
-    return ComplaintService(session).get_complaint(complaint_id)
+    complaint = ComplaintService(session).get_complaint(complaint_id)
+    if complaint is None:
+        raise HTTPException(status_code=404, detail=f"Complaint {complaint_id} not found, use CMPXXX format")
+    
+    return complaint
 
 """T-08"""
 @router.patch("/{complaint_id}/status", operation_id="change_status")
@@ -36,16 +40,16 @@ def change_status(complaint_id: str,
 
 """ create the complaint """
 
-@router.post("/{complaint_id}/create", operation_id="create")
+@router.post("/create", operation_id="create")
 def create(customer_id: str,
            channel: str,
            category: str,
            complaint_text: str,
            priority: str,
-           account_id: str,
-           assigned_analyst_id: str,
+           account_id: str | None = None,
+           assigned_analyst_id: str | None = None,
            session: Session = Depends(get_session)):
-     return ComplaintService(session).create(customer_id,
+    return ComplaintService(session).create(customer_id,
                                             channel,
                                             category,
                                             complaint_text,

@@ -27,17 +27,18 @@ class history_repository:
             new_status,
             changed_at,
             changed_by_role,
-            comment):
-        history_id = self.next_id()
+            comments):
+        #history_id = self.next_id()
         history = ComplaintStatusHistory(
-            history_id=history_id,
+            #history_id=history_id,
             complaint_id=complaint_id,
             old_status=old_status,
             new_status=new_status,
             changed_by=changed_by_role,
             changed_at=changed_at,
-            comment = comment,
+            comments = comments,
         )
         self.session.add(history)
         self.session.commit()
         self.session.refresh(history)
+        return history
